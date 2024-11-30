@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "can.h"
 #include "dma.h"
 #include "gpio.h"
 #include "tim.h"
@@ -90,9 +91,23 @@ int main(void) {
     MX_DMA_Init();
     MX_TIM10_Init();
     MX_USART3_UART_Init();
+    MX_CAN1_Init();
     /* USER CODE BEGIN 2 */
     HAL_TIM_Base_Start_IT(&htim10);
 
+    CAN_FilterTypeDef filter_config = { .FilterIdHigh = 0x0000,
+                                        .FilterIdLow = 0x0000,
+                                        .FilterMaskIdHigh = 0x0000,
+                                        .FilterMaskIdLow = 0x0000,
+                                        .FilterFIFOAssignment = CAN_FILTER_FIFO0,
+                                        .FilterBank = 0,
+                                        .FilterMode = CAN_FILTERMODE_IDMASK,
+                                        .FilterScale = CAN_FILTERSCALE_16BIT,
+                                        .FilterActivation = CAN_FILTER_ENABLE,
+                                        .SlaveStartFilterBank = 0 };
+    HAL_CAN_ConfigFilter(&hcan1, &filter_config);
+    HAL_CAN_Start(&hcan1);
+    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
     /* USER CODE END 2 */
 
     /* Infinite loop */

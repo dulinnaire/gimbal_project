@@ -3,7 +3,7 @@
 //
 #include "pid.h"
 
-float PID::in_range(float val, float min, float max) {
+static float in_range(float val, float min, float max) {
     return val < min ? min : (val > max ? max : val);
 }
 
@@ -41,7 +41,7 @@ PID::PID(float kp, float ki, float kd, float out_max, float i_max):
     error_[1] = 0;
 }
 
-float PID::calc(float ref, float fdb) {
+float PID::calculate(float ref, float fdb) {
     // update last error
     error_[1] = error_[0];
     // update current error

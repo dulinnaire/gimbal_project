@@ -8,11 +8,9 @@ class PID {
 public:
     PID();
     PID(float kp, float ki, float kd, float out_max, float i_max);
-    float calc(float ref, float fdb);
+    float calculate(float ref, float fdb);
 
 private:
-    float in_range(float val, float min, float max);
-
     float error_[2]; // 0 for current, 1 for last
     float error_sum_;
     float ref_, fdb_;
