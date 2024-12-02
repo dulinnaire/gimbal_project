@@ -4,10 +4,19 @@
 
 #ifndef PID_H
 #define PID_H
+
+struct PIDInitStruct {
+    float _kp;
+    float _ki;
+    float _kd;
+    float _i_max; // error_sum限幅
+    float _out_max; // 总输出限幅
+};
+
 class PID {
 public:
     PID();
-    PID(float kp, float ki, float kd, float out_max, float i_max);
+    PID(const PIDInitStruct& pid_init_struct);
     float calculate(float ref, float fdb);
 
 private:

@@ -24,18 +24,18 @@ PID::PID():
     error_[1] = 0;
 }
 
-PID::PID(float kp, float ki, float kd, float out_max, float i_max):
+PID::PID(const PIDInitStruct& pid_init_struct):
     error_sum_(0),
     ref_(0),
     fdb_(0),
-    kp_(kp),
-    ki_(ki),
-    kd_(kd),
+    kp_(pid_init_struct._kp),
+    ki_(pid_init_struct._ki),
+    kd_(pid_init_struct._kd),
     p_out_(0),
     i_out_(0),
     d_out_(0),
-    i_max_(i_max),
-    out_max_(out_max),
+    i_max_(pid_init_struct._i_max),
+    out_max_(pid_init_struct._out_max),
     output_(0) {
     error_[0] = 0;
     error_[1] = 0;
