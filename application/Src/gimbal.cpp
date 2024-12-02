@@ -65,6 +65,11 @@ void Gimbal::set_yaw_angle(float angle) {
     angle_ref.yaw_ref = angle;
 }
 
+void Gimbal::stop() {
+    pitch_motor.stop();
+    yaw_motor.stop();
+}
+
 void Gimbal::handle() {
     pitch_motor.set_angle(angle_ref.pitch_ref);
     yaw_motor.set_angle(angle_ref.yaw_ref);

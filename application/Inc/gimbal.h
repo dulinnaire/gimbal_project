@@ -15,6 +15,8 @@ public:
     void set_pitch_angle(float angle);
     void set_yaw_angle(float angle);
 
+    void stop();
+
     void handle();
 
 private:
