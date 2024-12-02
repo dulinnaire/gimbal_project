@@ -9,6 +9,8 @@ static float linear_mapping(int in, int in_min, int in_max, float out_min, float
 }
 
 DJIMotor::DJIMotor() {
+    motor_status = STOP;
+
     motor_type = MOTOR_TYPE_NONE;
     motor_id = MOTOR_ID_NONE;
 
@@ -40,6 +42,8 @@ DJIMotor::DJIMotor(
     PID angle_pid,
     MotorPIDType motor_pid_type
 ) {
+    motor_status = STOP;
+
     motor_type = DJI_motor_type;
     motor_id = id;
 
@@ -134,11 +138,17 @@ void DJIMotor::data_process(uint8_t data[8]) {
 }
 
 void DJIMotor::set_speed(uint16_t speed) {
+    motor_status = RUNNING;
     pid_ref.speed_ref = pid_type == SINGLE_SPEED ? speed : 0;
 }
 
 void DJIMotor::set_angle(float angle) {
+    motor_status = RUNNING;
     pid_ref.angle_ref = pid_type == DOUBLE_ANGLE ? angle / 360 * 8192 * reduction_ratio : 0;
+}
+
+void DJIMotor::stop() {
+    motor_status = STOP;
 }
 
 /*
@@ -163,6 +173,11 @@ void DJIMotor::handle() {
             control_value = 0;
             break;
     }
+
+    if (motor_status == STOP) {
+        control_value = 0;
+    }
+
     can1_tx_data[2 * ((motor_id - 1) % 4)] = control_value >> 8;
     can1_tx_data[2 * ((motor_id - 1) % 4) + 1] = control_value & 0xFF;
     HAL_CAN_AddTxMessage(&hcan1, &tx_header, can1_tx_data, &tx_mailbox);

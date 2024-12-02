@@ -23,6 +23,8 @@ enum MotorID {
     MOTOR_ID_8
 };
 
+enum MotorStatus { STOP = 0, RUNNING };
+
 class DJIMotor {
 public:
     DJIMotor();
@@ -40,11 +42,15 @@ public:
 
     void set_angle(float angle);
 
+    void stop();
+
     void handle();
 
     uint16_t rx_id() const;
 
 private:
+    MotorStatus motor_status;
+
     DJIMotorType motor_type;
     MotorID motor_id;
 
