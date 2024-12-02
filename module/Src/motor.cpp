@@ -38,15 +38,27 @@ DJIMotor::DJIMotor(
     MotorID id,
     PID speed_pid,
     PID angle_pid,
-    MotorPIDType motor_pid_type,
-    float ratio
+    MotorPIDType motor_pid_type
 ) {
     motor_type = DJI_motor_type;
     motor_id = id;
 
     pid_type = motor_pid_type;
 
-    reduction_ratio = ratio; // 电机减速比
+    switch (motor_type) {
+        case M2006:
+            reduction_ratio = 36;
+            break;
+        case M3508:
+            reduction_ratio = 3591 / 187;
+            break;
+        case GM6020:
+            reduction_ratio = 1;
+            break;
+        default:
+            reduction_ratio = 0;
+            break;
+    }
 
     motor_speed_pid = speed_pid;
     motor_angle_pid = angle_pid;
@@ -77,6 +89,7 @@ DJIMotor::DJIMotor(
             } else {
                 tx_header.StdId = 0x01FF;
             }
+            rx_message_id = 0x200 + motor_id;
             break;
         case M2006:
             if (motor_id <= MOTOR_ID_4) {
@@ -84,6 +97,7 @@ DJIMotor::DJIMotor(
             } else {
                 tx_header.StdId = 0x01FF;
             }
+            rx_message_id = 0x200 + motor_id;
             break;
         case GM6020:
             if (motor_id <= MOTOR_ID_4) {
@@ -91,12 +105,15 @@ DJIMotor::DJIMotor(
             } else {
                 tx_header.StdId = 0x02FE;
             }
+            rx_message_id = 0x204 + motor_id;
             break;
         default:
             break;
     }
+}
 
-    // motor_list.insert(std::map<uint16_t, DJIMotor*>::value_type(tx_header.StdId + motor_id, this));
+uint16_t DJIMotor::rx_id() const {
+    return rx_message_id;
 }
 
 void DJIMotor::data_process(uint8_t data[8]) {
@@ -121,7 +138,7 @@ void DJIMotor::set_speed(uint16_t speed) {
 }
 
 void DJIMotor::set_angle(float angle) {
-    pid_ref.angle_ref = pid_type == DOUBLE_ANGLE ? angle / 360 * 8192 : 0;
+    pid_ref.angle_ref = pid_type == DOUBLE_ANGLE ? angle / 360 * 8192 * reduction_ratio : 0;
 }
 
 /*
@@ -146,11 +163,7 @@ void DJIMotor::handle() {
             control_value = 0;
             break;
     }
-    can1_tx_data[2 * motor_id] = control_value >> 8;
-    can1_tx_data[2 * motor_id + 1] = control_value & 0xFF;
+    can1_tx_data[2 * ((motor_id - 1) % 4)] = control_value >> 8;
+    can1_tx_data[2 * ((motor_id - 1) % 4) + 1] = control_value & 0xFF;
     HAL_CAN_AddTxMessage(&hcan1, &tx_header, can1_tx_data, &tx_mailbox);
 }
-
-
-
-

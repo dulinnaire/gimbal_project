@@ -31,8 +31,7 @@ public:
         MotorID id,
         PID speed_pid,
         PID angle_pid,
-        MotorPIDType motor_pid_type,
-        float ratio
+        MotorPIDType motor_pid_type
     );
 
     void data_process(uint8_t data[8]);
@@ -42,6 +41,8 @@ public:
     void set_angle(float angle);
 
     void handle();
+
+    uint16_t rx_id() const;
 
 private:
     DJIMotorType motor_type;
@@ -71,8 +72,7 @@ private:
     float temp; // °C 反馈电机温度
 
     CAN_TxHeaderTypeDef tx_header;
+    uint16_t rx_message_id;
 };
-
-
 
 #endif //MOTOR_H
