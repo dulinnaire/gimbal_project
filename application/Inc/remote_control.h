@@ -5,9 +5,8 @@
 #ifndef REMOTE_CONTROL_H
 #define REMOTE_CONTROL_H
 
-#include "gpio.h"
+#include "dbus.h"
 #include "stm32f4xx.h"
-#include "usart.h"
 
 #define RC_FRAME_SIZE ((uint8_t)18)
 #define RC_CH_VAL_MIN ((uint16_t)364)
@@ -32,7 +31,7 @@ public:
         RCSwitchStatus right_switch;
     } switch_;
 
-    void rc_rx_enable();
+    void handle();
 
     void rc_data_process();
 

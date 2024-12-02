@@ -22,8 +22,8 @@ RC::RC() {
     switch_.right_switch = DOWN;
 }
 
-void RC::rc_rx_enable() {
-    HAL_UART_Receive_DMA(&huart3, this->rc_buff, RC_FRAME_SIZE);
+void RC::handle() {
+    DBUS_handle(this->rc_buff);
 }
 
 void RC::rc_transfer() {
