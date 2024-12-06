@@ -4,8 +4,8 @@
 
 #include "motor.h"
 
-static float linear_mapping(int in, int in_min, int in_max, float out_min, float out_max) {
-    return (in - in_min) / (in_max - in_min) * (out_max - out_min) + out_max;
+static float linear_mapping(float in, float in_min, float in_max, float out_min, float out_max) {
+    return (in - in_min) / (in_max - in_min) * (out_max - out_min) + out_min;
 }
 
 DJIMotor::DJIMotor() {
@@ -40,7 +40,8 @@ DJIMotor::DJIMotor(
     MotorID id,
     PID speed_pid,
     PID angle_pid,
-    MotorPIDType motor_pid_type
+    MotorPIDType motor_pid_type,
+    float init_angle
 ) {
     motor_status = STOP;
 
@@ -70,7 +71,7 @@ DJIMotor::DJIMotor(
     pid_ref.angle_ref = 0;
     pid_ref.speed_ref = 0;
 
-    encoder_angle = 0; // 当前电机编码器角度 range:[0,8191]
+    encoder_angle = init_angle; // 当前电机编码器角度 range:[0,8191]
     last_encoder_angle = 0; // 上次电机编码器角度 range:[0,8191]
     delta_encoder_angle = 0; // 编码器端新转动的角度
     total_encoder_angle = 0; // 编码器转过的总角度
@@ -105,9 +106,9 @@ DJIMotor::DJIMotor(
             break;
         case GM6020:
             if (motor_id <= MOTOR_ID_4) {
-                tx_header.StdId = 0x01FE;
+                tx_header.StdId = 0x01FF;
             } else {
-                tx_header.StdId = 0x02FE;
+                tx_header.StdId = 0x02FF;
             }
             rx_message_id = 0x204 + motor_id;
             break;
@@ -119,6 +120,8 @@ DJIMotor::DJIMotor(
 uint16_t DJIMotor::rx_id() const {
     return rx_message_id;
 }
+
+volatile float float_monitor = 0;
 
 void DJIMotor::data_process(uint8_t data[8]) {
     last_encoder_angle = encoder_angle;
@@ -133,15 +136,18 @@ void DJIMotor::data_process(uint8_t data[8]) {
     total_encoder_angle = 8192 * round_cnt + encoder_angle;
 
     rotate_speed = (int16_t)((data[2] << 8) | data[3]);
-    current = linear_mapping((int16_t)((data[4] << 8) | data[5]), -32768, 32767, -20, 20);
-    temp = linear_mapping((uint8_t)data[6], 0, 255, 0, 125);
+    float_monitor = linear_mapping((int16_t)((data[4] << 8) | data[5]), -16384, 16384, -3, 3);
+    current = linear_mapping((int16_t)((data[4] << 8) | data[5]), -16384, 16384, -3, 3);
+    temp = data[6];
 }
 
+// speed: rpm
 void DJIMotor::set_speed(uint16_t speed) {
     motor_status = RUNNING;
     pid_ref.speed_ref = pid_type == SINGLE_SPEED ? speed : 0;
 }
 
+// angle: degree
 void DJIMotor::set_angle(float angle) {
     motor_status = RUNNING;
     pid_ref.angle_ref = pid_type == DOUBLE_ANGLE ? angle / 360 * 8192 * reduction_ratio : 0;
@@ -158,27 +164,35 @@ uint8_t can1_tx_data[8] = { 0 };
 
 void DJIMotor::handle() {
     uint32_t tx_mailbox;
+    int16_t feedback_component = 0, feedforward_component = 0;
     int16_t control_value = 0;
+
+    // 计算PID
     switch (pid_type) {
         case SINGLE_SPEED:
-            control_value = motor_speed_pid.calculate(pid_ref.speed_ref, rotate_speed);
+            feedback_component = motor_speed_pid.calculate(pid_ref.speed_ref, rotate_speed);
             break;
         case DOUBLE_ANGLE:
-            control_value = motor_speed_pid.calculate(
+            feedback_component = motor_speed_pid.calculate(
                 motor_angle_pid.calculate(pid_ref.angle_ref, total_encoder_angle),
                 rotate_speed
             );
             break;
         default:
-            control_value = 0;
+            feedback_component = 0;
             break;
     }
+
+    // 计算前馈
+    feedforward_component = 0;
+
+    control_value = feedback_component + feedforward_component;
 
     if (motor_status == STOP) {
         control_value = 0;
     }
 
-    can1_tx_data[2 * ((motor_id - 1) % 4)] = control_value >> 8;
-    can1_tx_data[2 * ((motor_id - 1) % 4) + 1] = control_value & 0xFF;
+    can1_tx_data[2 * ((motor_id - 1) % 4)] = control_value >> 8; // 高八位
+    can1_tx_data[2 * ((motor_id - 1) % 4) + 1] = control_value & 0xFF; // 低八位
     HAL_CAN_AddTxMessage(&hcan1, &tx_header, can1_tx_data, &tx_mailbox);
 }

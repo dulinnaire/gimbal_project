@@ -12,8 +12,8 @@
 enum DJIMotorType { MOTOR_TYPE_NONE = 0, M3508, M2006, GM6020 };
 enum MotorPIDType { PID_TYPE_NONE = 0, SINGLE_SPEED, DOUBLE_ANGLE };
 enum MotorID {
-    MOTOR_ID_NONE = -1,
-    MOTOR_ID_1 = 0,
+    MOTOR_ID_NONE = 0,
+    MOTOR_ID_1 = 1,
     MOTOR_ID_2,
     MOTOR_ID_3,
     MOTOR_ID_4,
@@ -33,7 +33,8 @@ public:
         MotorID id,
         PID speed_pid,
         PID angle_pid,
-        MotorPIDType motor_pid_type
+        MotorPIDType motor_pid_type,
+        float init_angle
     );
 
     void data_process(uint8_t data[8]);
@@ -61,8 +62,8 @@ private:
     PID motor_angle_pid; // 角度环PID
 
     struct {
-        uint16_t speed_ref;
-        uint16_t angle_ref;
+        int16_t speed_ref;
+        int16_t angle_ref;
     } pid_ref;
 
     float reduction_ratio; // 电机减速比
