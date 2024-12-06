@@ -42,6 +42,6 @@ void RC::rc_data_process() {
     channel_.left_col = channel_mapping((rc_data[4] >> 1 | rc_data[5] << 7) & 0x7FF);
 
     // 2bits switch
-    switch_.left_switch = (RCSwitchStatus)(rc_data[5] >> 4 & 0x03);
-    switch_.right_switch = (RCSwitchStatus)(rc_data[5] >> 6 & 0x03);
+    switch_.right_switch = (RCSwitchStatus)(rc_data[5] >> 4 & 0x03);
+    switch_.left_switch = (RCSwitchStatus)(rc_data[5] >> 6 & 0x03);
 }
