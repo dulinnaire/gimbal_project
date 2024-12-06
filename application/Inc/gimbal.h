@@ -15,6 +15,12 @@ public:
     void set_pitch_angle(float angle);
     void set_yaw_angle(float angle);
 
+    uint16_t pitch_rx_id();
+    uint16_t yaw_rx_id();
+
+    void pitch_data_process(uint8_t data[8]);
+    void yaw_data_process(uint8_t data[8]);
+
     void stop();
 
     void handle();
