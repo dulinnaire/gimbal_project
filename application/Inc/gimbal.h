@@ -5,6 +5,7 @@
 #ifndef GIMBAL_H
 #define GIMBAL_H
 
+#include "imu.h"
 #include "motor.h"
 #include "pid.h"
 

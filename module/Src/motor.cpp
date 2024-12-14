@@ -41,9 +41,12 @@ DJIMotor::DJIMotor(
     PID speed_pid,
     PID angle_pid,
     MotorPIDType motor_pid_type,
-    float init_angle
+    float init_angle,
+    FeedforwardStatus ff_status
 ) {
     motor_status = STOP;
+
+    feedforward_status = ff_status;
 
     motor_type = DJI_motor_type;
     motor_id = id;
@@ -121,8 +124,6 @@ uint16_t DJIMotor::rx_id() const {
     return rx_message_id;
 }
 
-volatile float float_monitor = 0;
-
 void DJIMotor::data_process(uint8_t data[8]) {
     last_encoder_angle = encoder_angle;
     encoder_angle = (uint16_t)((data[0] << 8) | data[1]);
@@ -136,7 +137,6 @@ void DJIMotor::data_process(uint8_t data[8]) {
     total_encoder_angle = 8192 * round_cnt + encoder_angle;
 
     rotate_speed = (int16_t)((data[2] << 8) | data[3]);
-    float_monitor = linear_mapping((int16_t)((data[4] << 8) | data[5]), -16384, 16384, -3, 3);
     current = linear_mapping((int16_t)((data[4] << 8) | data[5]), -16384, 16384, -3, 3);
     temp = data[6];
 }
@@ -161,7 +161,7 @@ void DJIMotor::stop() {
 计算PID并发送CAN报文
 */
 uint8_t can1_tx_data[8] = { 0 };
-
+volatile float float_monitor = 0;
 void DJIMotor::handle() {
     uint32_t tx_mailbox;
     int16_t feedback_component = 0, feedforward_component = 0;
@@ -184,7 +184,13 @@ void DJIMotor::handle() {
     }
 
     // 计算前馈
-    feedforward_component = 0;
+    if (feedforward_status == FF_ENABLE) {
+        feedforward_component =
+            linear_mapping(-1.88 * pid_ref.angle_ref * 0.0001 + 0.894, -3, 3, -16384, 16384);
+        float_monitor = feedforward_component;
+    } else {
+        feedforward_component = 0;
+    }
 
     control_value = feedback_component + feedforward_component;
 

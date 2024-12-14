@@ -60,15 +60,23 @@ Gimbal::Gimbal() {
         pitch_speed_pid,
         pitch_angle_pid,
         DOUBLE_ANGLE,
-        0x1650
+        0x1650,
+        FF_ENABLE
     );
 
-    yaw_motor =
-        DJIMotor(YAW_MOTOR_TYPE, YAW_MOTOR_ID, yaw_speed_pid, yaw_angle_pid, DOUBLE_ANGLE, 0);
+    yaw_motor = DJIMotor(
+        YAW_MOTOR_TYPE,
+        YAW_MOTOR_ID,
+        yaw_speed_pid,
+        yaw_angle_pid,
+        DOUBLE_ANGLE,
+        0,
+        FF_DISABLE
+    );
     // DJIMotor 摩擦轮_left
     // DJIMotor 摩擦轮_right
 
-    angle_ref.pitch_ref = 0;
+    angle_ref.pitch_ref = 0x1650;
     angle_ref.yaw_ref = 0;
 }
 

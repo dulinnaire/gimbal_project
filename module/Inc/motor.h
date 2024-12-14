@@ -25,6 +25,8 @@ enum MotorID {
 
 enum MotorStatus { STOP = 0, RUNNING };
 
+enum FeedforwardStatus { FF_DISABLE = 0, FF_ENABLE };
+
 class DJIMotor {
 public:
     DJIMotor();
@@ -34,7 +36,8 @@ public:
         PID speed_pid,
         PID angle_pid,
         MotorPIDType motor_pid_type,
-        float init_angle
+        float init_angle,
+        FeedforwardStatus ff_status
     );
 
     void data_process(uint8_t data[8]);
@@ -51,6 +54,8 @@ public:
 
 private:
     MotorStatus motor_status;
+
+    FeedforwardStatus feedforward_status;
 
     DJIMotorType motor_type;
     MotorID motor_id;
