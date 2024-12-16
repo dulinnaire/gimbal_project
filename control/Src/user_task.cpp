@@ -2,42 +2,34 @@
 // Created by 81301 on 2024/11/13.
 //
 
+#include "BMI088.h"
 #include "can.h"
 #include "control_task.h"
 #include "gimbal.h"
+#include "imu.h"
 #include "remote_control.h"
 #include "stm32f4xx.h"
 #include "tim.h"
 #include "watchdog.h"
 
-// TODO: user_task中不应该出现HAL库
-
 Gimbal gimbal;
 RC remote_control;
 
-float pitch_angle = 5200; // [0:8191]
+float pitch_angle = 0; // [0:360]
 float yaw_angle = 0; // [0:360]
-volatile float yaw_angle_mon = 0;
 
-float linear_mapping(const float input, float i_min, float i_max, float o_min, float o_max) {
+static float linear_mapping(const float input, float i_min, float i_max, float o_min, float o_max) {
     return (input - i_min) * (o_max - o_min) * 1.0 / (i_max - i_min) + o_min;
 }
 
 // The main loop of the program
 void loop() {
+    imu_update();
     remote_control.handle();
 
-    if (pitch_angle > 0x1650) {
-        pitch_angle = 0x1650;
-    } else if (pitch_angle < 0x1150) {
-        pitch_angle = 0x1150;
-    }
+    // gimbal.set_pitch_angle(pitch_angle); // 360
+    // gimbal.set_yaw_angle(yaw_angle); // 360
 
-    gimbal.set_pitch_angle(pitch_angle / 8192 * 360);
-    gimbal.set_yaw_angle(yaw_angle);
-    yaw_angle_mon = yaw_angle / 360 * 8192;
-
-    // control_handle();
     gimbal.handle();
 
     feed_watchdog();
