@@ -9,7 +9,7 @@
 
 float imu_pitch_accel = 0, imu_pitch_gyro = 0;
 float imu_pitch_angle = 0;
-float alpha = 0.9;
+float alpha = 0.991;
 float sample_period = 0.001; // 1ms
 
 float rate_x = 0, rate_y = 0, rate_z = 0;

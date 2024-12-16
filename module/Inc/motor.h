@@ -48,7 +48,11 @@ public:
 
     void stop();
 
-    void handle();
+    void handle(float speed_reference, float angle_reference);
+
+    float get_rotate_speed() const;
+
+    float get_total_angle() const;
 
     uint16_t rx_id() const;
 

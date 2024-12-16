@@ -53,7 +53,7 @@ include_directories(application/Inc module/Inc Core/Inc Drivers/STM32F4xx_HAL_Dr
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32F407xx)
 
-file(GLOB_RECURSE SOURCES "application/*.*" "module/*.*" "Core/*.*" "Drivers/*.*")
+file(GLOB_RECURSE SOURCES "control/*.*" "application/*.*" "module/*.*" "Core/*.*" "Drivers/*.*")
 
 
 add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)

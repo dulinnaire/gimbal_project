@@ -170,7 +170,7 @@ void BMI088_get_accel_data(float* accel_x, float* accel_y, float* accel_z) {
 void BMI088_get_gyro_data(float* rate_x, float* rate_y, float* rate_z) {
     int16_t x, y, z;
     BMI088_get_gyro_data_int(&x, &y, &z);
-    *rate_x = linear_mapping(x, -32768, 32767, -2000, 2000);
-    *rate_y = linear_mapping(y, -32768, 32767, -2000, 2000);
-    *rate_z = linear_mapping(z, -32768, 32767, -2000, 2000);
+    *rate_x = linear_mapping(x, -32767, 32767, -2000, 2000);
+    *rate_y = linear_mapping(y, -32767, 32767, -2000, 2000);
+    *rate_z = linear_mapping(z, -32767, 32767, -2000, 2000);
 }

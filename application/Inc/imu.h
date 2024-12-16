@@ -11,6 +11,10 @@ extern "C" {
 
 #include "BMI088.h"
 
+extern float imu_pitch_angle;
+extern float rate_x, rate_y, rate_z;
+extern float accel_x, accel_y, accel_z;
+
 void imu_init();
 
 void imu_get_gyro(float* rate_x, float* rate_y, float* rate_z);

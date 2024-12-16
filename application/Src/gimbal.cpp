@@ -23,17 +23,17 @@ Gimbal::Gimbal() {
     // PID
     PIDInitStruct pid_init_struct;
 
-    pid_init_struct._kp = 145;
+    pid_init_struct._kp = 185;
     pid_init_struct._ki = 0;
     pid_init_struct._kd = 0;
     pid_init_struct._i_max = 0;
     pid_init_struct._out_max = 10000;
     PID pitch_speed_pid(pid_init_struct);
 
-    pid_init_struct._kp = 0.41;
-    pid_init_struct._ki = 0.043;
-    pid_init_struct._kd = 0;
-    pid_init_struct._i_max = 125;
+    pid_init_struct._kp = 0.14; //0.41;
+    pid_init_struct._ki = 0.018; //0.043;
+    pid_init_struct._kd = 0.6;
+    pid_init_struct._i_max = 165;
     pid_init_struct._out_max = 180;
     PID pitch_angle_pid(pid_init_struct);
 
@@ -109,11 +109,23 @@ void Gimbal::stop() {
     yaw_motor.stop();
 }
 
+volatile float pitch_angle_mon = 0;
 void Gimbal::handle() {
-    pitch_motor.set_angle(angle_ref.pitch_ref);
-    yaw_motor.set_angle(angle_ref.yaw_ref);
+    pitch_motor.set_angle(angle_ref.pitch_ref); // 360
+    yaw_motor.set_angle(angle_ref.yaw_ref); // 360
 
-    pitch_motor.handle();
-    yaw_motor.handle();
+    pitch_angle_mon = pitch_motor.get_total_angle() - (5185 - 13) / 22.75 + 0.4;
+
+    if (true) {
+        // pitch_motor.handle(rate_x * 9.55, imu_pitch_angle * 8192.0 / 360);
+        // yaw_motor.handle(yaw_motor.get_rotate_speed(), yaw_motor.get_total_angle() * 8192.0 / 360);
+        // rate_x 是imu转速，不是电机转速
+        pitch_motor.handle(pitch_motor.get_rotate_speed(), imu_pitch_angle * 8192 / 360);
+        yaw_motor.handle(yaw_motor.get_rotate_speed(), yaw_motor.get_total_angle() * 8192.0 / 360);
+
+    } else {
+        pitch_motor.handle(pitch_motor.get_rotate_speed(), pitch_motor.get_total_angle());
+        yaw_motor.handle(yaw_motor.get_rotate_speed(), yaw_motor.get_total_angle());
+    }
 }
 

@@ -124,6 +124,14 @@ uint16_t DJIMotor::rx_id() const {
     return rx_message_id;
 }
 
+float DJIMotor::get_rotate_speed() const {
+    return rotate_speed;
+}
+
+float DJIMotor::get_total_angle() const {
+    return total_encoder_angle / 8192.0 * 360;
+}
+
 void DJIMotor::data_process(uint8_t data[8]) {
     last_encoder_angle = encoder_angle;
     encoder_angle = (uint16_t)((data[0] << 8) | data[1]);
@@ -150,7 +158,7 @@ void DJIMotor::set_speed(uint16_t speed) {
 // angle: degree
 void DJIMotor::set_angle(float angle) {
     motor_status = RUNNING;
-    pid_ref.angle_ref = pid_type == DOUBLE_ANGLE ? angle / 360 * 8192 * reduction_ratio : 0;
+    pid_ref.angle_ref = pid_type == DOUBLE_ANGLE ? angle / 360 * 8192 * reduction_ratio : 0; // 8192
 }
 
 void DJIMotor::stop() {
@@ -161,8 +169,8 @@ void DJIMotor::stop() {
 计算PID并发送CAN报文
 */
 uint8_t can1_tx_data[8] = { 0 };
-volatile float float_monitor = 0;
-void DJIMotor::handle() {
+
+void DJIMotor::handle(float speed_feedback, float angle_feedback) {
     uint32_t tx_mailbox;
     int16_t feedback_component = 0, feedforward_component = 0;
     int16_t control_value = 0;
@@ -170,12 +178,14 @@ void DJIMotor::handle() {
     // 计算PID
     switch (pid_type) {
         case SINGLE_SPEED:
-            feedback_component = motor_speed_pid.calculate(pid_ref.speed_ref, rotate_speed);
+            // rpm rpm
+            feedback_component = motor_speed_pid.calculate(pid_ref.speed_ref, speed_feedback);
             break;
         case DOUBLE_ANGLE:
+            // 8192 8192 rpm
             feedback_component = motor_speed_pid.calculate(
-                motor_angle_pid.calculate(pid_ref.angle_ref, total_encoder_angle),
-                rotate_speed
+                motor_angle_pid.calculate(pid_ref.angle_ref, angle_feedback),
+                speed_feedback
             );
             break;
         default:
@@ -185,9 +195,15 @@ void DJIMotor::handle() {
 
     // 计算前馈
     if (feedforward_status == FF_ENABLE) {
-        feedforward_component =
-            linear_mapping(-1.88 * pid_ref.angle_ref * 0.0001 + 0.894, -3, 3, -16384, 16384);
-        float_monitor = feedforward_component;
+        // feedforward_component = linear_mapping(-1.88 * pid_ref.angle_ref * 0.0001 + 0.894, -3, 3, -16384, 16384);
+        feedforward_component = linear_mapping(
+            -1.88 * (pid_ref.angle_ref * 1 + 5185) * 0.0001 + 0.894,
+            -3,
+            3,
+            -16384,
+            16384
+        );
+
     } else {
         feedforward_component = 0;
     }
